@@ -3,7 +3,7 @@ import re
 import random
 import math
 def calc_het():
-    f = open('M:\\5sye.pdb','r')
+    f = open('M:\\5sye.pdb','r') #need to save a pdb file to local 
     noh = 0
     for line in f:
         a = re.search(r'^HETATM.*TA1.*$',line)
