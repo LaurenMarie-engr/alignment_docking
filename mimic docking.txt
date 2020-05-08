@@ -1,0 +1,124 @@
+#lauren
+import re
+import random
+import math
+def calc_het():
+    f = open('M:\\5sye.pdb','r')
+    noh = 0
+    for line in f:
+        a = re.search(r'^HETATM.*TA1.*$',line)
+        if a:
+            #print(a.group())
+            noh+=1
+    f.close()
+    return noh
+def calc_atm():
+    f = open('M:\\5sye.pdb','r')
+    noa = 0
+    for line in f:
+        a = re.search(r'^ATOM.*$',line)
+        if a:
+            #print(a.group())
+            noa+=1
+    f.close()
+    return noa
+def rgen(c):
+    rg = random.uniform(c*-1.,c)
+    return rg
+def translation(coor, l):
+    dx = rgen(l)
+    dy = rgen(l)
+    dz = rgen(l)
+    for i in range(len(coor)):
+        coor[i][1] += dx
+        coor[i][2] += dy
+        coor[i][3] += dz
+    return coor
+def gc(coor):
+    n = float(len(coor))
+    v = [0.,0.,0.]
+    for i in range(len(coor)):
+        v[0]+= coor[i][1]/n
+        v[1]+= coor[i][2]/n
+        v[2]+= coor[i][3]/n
+    return v
+def rotation(coor,m):
+    pi = math.pi
+    a = rgen(m)/180.*pi #around z axis
+    b = rgen(m)/180.*pi #around y axis
+    g = rgen(m)/180.*pi #around x axis
+    r = [[0]*3 for i in range(3)]
+    r[0][0] = math.cos(a) * math.cos(b)
+    r[0][1] = math.cos(a) * math.sin(b) * math.sin(g) - math.sin(a) * math.cos(g)
+    r[0][2] = math.cos(a) * math.sin(b) * math.cos(g) + math.sin(a) * math.sin(g)
+    r[1][0] = math.sin(a) * math.cos(b)
+    r[1][1] = math.sin(a) * math.sin(b) * math.sin(g) + math.cos(a) * math.cos(g)
+    r[1][2] = math.sin(a) * math.sin(b) * math.cos(g) - math.cos(a) * math.sin(g)
+    r[2][0] = math.sin(b) * -1.
+    r[2][1] = math.cos(b) * math.sin(g)
+    r[2][2] = math.cos(b) * math.cos(g)
+
+
+    n = [[0]*3 for i in range(len(coor))]
+    o = [[0]*3 for i in range(len(coor))]
+    ori = gc(coor)
+    for i in range(len(coor)):
+        n[i][0] = coor[i][1] - ori[0] #x'
+        n[i][1] = coor[i][2] - ori[1] #y'
+        n[i][2] = coor[i][3] - ori[2] #z'
+    for i in range(len(coor)):
+        for j in range(3):
+            o[i][j] = n[i][j]
+    for i in range(len(coor)):
+        n[i][0] = r[0][0] * o[i][0] + r[0][1] * o[i][1] + r[0][2] * o[i][2]  # x"
+        n[i][1] = r[1][0] * o[i][0] + r[1][1] * o[i][1] + r[1][2] * o[i][2]  # y"
+        n[i][2] = r[2][0] * o[i][0] + r[2][1] * o[i][1] + r[2][2] * o[i][2]  # z"
+
+    for i in range(len(coor)):
+        coor[i][1] = n[i][0] + ori[0]  # x
+        coor[i][2] = n[i][1] + ori[1]  # y
+        coor[i][3] = n[i][2] + ori[2]  # z
+    return coor
+def main():
+    nof_het = calc_het()
+    nof_atm = calc_atm()
+    print(nof_het,nof_atm)
+    f = open('M:\\5sye.pdb','r')
+    pro = [['',0.0,0.0,0.0,''] for i in range(nof_atm)]
+    lig = [['',0.0,0.0,0.0,''] for i in range(nof_het)]
+    (nof_atm,nof_het) = (0,0)
+    for line in f:
+        a = re.search(r'^ATOM.*$', line)
+        b = re.search(r'^HETATM.*TA1.*$', line)
+        if a:
+            pro[nof_atm][0] = line[0:30]
+            pro[nof_atm][1] = float(line[30:38])#x
+            pro[nof_atm][2] = float(line[38:46])#y
+            pro[nof_atm][3] = float(line[46:54])#z
+            pro[nof_atm][4] = line[54:81]
+            #print(line)#print( pro[nof_atm])
+            nof_atm+=1
+        elif b:
+            lig[nof_het][0] = line[0:30]
+            lig[nof_het][1] = float(line[30:38])  # x
+            lig[nof_het][2] = float(line[38:46])  # y
+            lig[nof_het][3] = float(line[46:54])  # z
+            lig[nof_het][4] = line[54:81]
+            nof_het += 1
+    f.close()
+    f1 = open('M:\\lauren.pdb','w') #write
+    for i in range(nof_atm):
+        nline = ('%30s%8.3f%8.3f%8.3f%25s' %(pro[i][0],pro[i][1],pro[i][2],pro[i][3],pro[i][4]))
+        #print(nline)
+        #f1.write(nline)
+    #f1.write('TER\n')
+    for i in range(20):
+        lig = translation(lig, 10.)
+        lig = rotation(lig, 45.)
+        for j in range(nof_het):
+            nline = ('%30s%8.3f%8.3f%8.3f%25s' % (lig[j][0], lig[j][1], lig[j][2], lig[j][3], lig[j][4]))
+            # print(nline)
+            f1.write(nline)
+        f1.write('TER\n')
+        f1.write('END\n')
+main()

@@ -1,0 +1,188 @@
+def printsc(s1,s2,y,x,a):
+    for j in range(y):
+        if j < 1:
+            print('     ', end = "")
+        else:
+            print('  ',s1[j-1], end = "")
+    print()
+    for i in range(x):
+        for j in range (y):
+            if j < 1:
+                if i > 0:
+                    print(s2[i-1], end = "")
+                else:
+                    print(' ', end = "")
+            if a[i][j] < 0 or a[i][j] > 9:
+                print(' ', a[i][j], end="")
+            else:
+                print('  ',a[i][j],end="")
+        print ()
+
+def printdr(s1,s2,y,x,a):
+    for j in range(y):
+        if j < 1:
+            print('    ', end = "")
+        else:
+            print(' ',s1[j-1], end = "")
+    print()
+    for i in range(x):
+        for j in range (y):
+            if j < 1:
+                if i > 0:
+                    print(s2[i-1], end = "")
+                else:
+                    print(' ', end = "")
+            print (' ',a[i][j], end = "")
+        print ()
+def local_align (seq1 , seq2):
+    gap = -5 # gap penalty
+    mismatch = -2 # mismatch penalty
+    match = 5 # match bonus
+    l1 = len(seq1) + 1
+    l2 = len(seq2) + 1
+    sc = [[0]*l1 for i in range(l2)]
+    dr = [['?']*l1 for i in range(l2)]
+    #printsc(seq1,seq2,l1,l2,sc)
+    #printdr(seq1,seq2,l1,l2,dr)
+    for j in range (1,l1):
+        sc[0][j] = 0
+    for i in range (1,l2):
+        sc[i][0] = 0
+    #printsc(seq1, seq2, l1, l2, sc)
+    #printdr(seq1, seq2, l1, l2, dr)
+    (l,u,ul) = (0,0,0)
+    (highest, x, y) = (0,0,0)
+    for i in range (1,l2):
+        for j in range (1,l1):
+            l = sc[i][j-1] + gap
+            u = sc[i-1][j] + gap
+            if seq1[j-1] == seq2[i-1]:
+                ul = sc[i-1][j-1] + match
+            else:
+                ul = sc[i-1][j-1] + mismatch
+            sc[i][j] = max(l,u,ul,0)
+            if sc[i][j] == ul:
+                dr[i][j] = 'd'
+            elif sc[i][j] == u:
+                dr[i][j] = 't'
+            else:
+                dr[i][j] = 'l'
+            if (highest < sc[i][j]):
+                highest = sc[i][j]
+                x = i
+                y = j
+    #printsc(seq1, seq2, l1, l2, sc)
+    #printdr(seq1, seq2, l1, l2, dr)
+    seq3 = ''
+    align = ''
+    seq4 = ''
+    nofgap = 0
+    nofmatch = 0
+    print("Local alignment score: ",sc[x][y])
+    while (sc[x][y]>0):
+        if dr[x][y] == 'd':
+            seq3 = seq1[y-1] + seq3
+            seq4 = seq2[x-1] + seq4
+            if seq1[y-1] == seq2[x-1]:
+                align = '|' + align
+                nofmatch +=1
+            else:
+                align = ' ' + align
+            x -= 1
+            y -= 1
+        elif dr[x][y] == 't':
+            seq3 = '-' + seq3
+            seq4 = seq2[x-1] + seq4
+            align = ' ' + align
+            x -=1
+            nofgap +=1
+        elif dr[x][y] == 'l':
+            seq3 = seq1[y-1] + seq3
+            seq4 = '-' + seq4
+            align = ' ' + align
+            y -= 1
+    print("Number of gaps: ", nofgap, "; Number of matches: ", nofmatch)
+    print(seq3)
+    print(align)
+    print(seq4)
+def global_align (seq1, seq2):
+    gap = -5 #gap penalty
+    mismatch = -2 #penalty for mismatch
+    match = 5 #bonus
+    l1 = len(seq1) + 1
+    l2 = len(seq2) + 1
+    sc = [[0]*l1 for i in range(l2)]
+    dr = [['?']*l1 for i in range(l2)]
+    #printsc(seq1,seq2,l1,l2,sc)
+    #printdr(seq1,seq2,l1,l2,dr)
+    for j in range (1,l1):
+        sc[0][j] = sc[0][j-1]+ gap
+        dr[0][j] = 'l'
+    for i in range(1,l2):
+        sc[i][0] = sc[i-1][0] + gap
+        dr[i][0] = 't'
+    #printsc(seq1, seq2, l1, l2, sc)
+    #printdr(seq1, seq2, l1, l2, dr)
+    (l,u,ul) = (0,0,0)
+    for i in range (1,l2):
+        for j in range(1,l1):
+            l = sc[i][j-1] + gap
+            u = sc[i-1][j] + gap
+            if seq1[j-1] == seq2[i-1]:
+                ul = sc[i-1][j-1] + match
+            else:
+                ul = sc[i-1][j-1] + mismatch
+            sc[i][j] = max(l,u,ul)
+            if (sc[i][j] == ul):
+                dr[i][j] = 'd'
+            elif(sc[i][j] == u):
+                dr [i][j] = 't'
+            else:
+                dr[i][j] = 'l'
+    #printsc(seq1, seq2, l1, l2, sc)
+    #printdr(seq1, seq2, l1, l2, dr)
+    x = l2-1
+    y = l1-1
+    seq3 = ''
+    align = ''
+    seq4 = ''
+    nofgap = 0
+    nofmatch = 0
+    print("global alignement score: ",sc[x][y])
+    while (x>0 and y>0):
+        if dr[x][y] == 'd':
+            seq3 = seq1[y-1] + seq3
+            seq4 = seq2[x-1] + seq4
+            if seq1[y-1] == seq2[x-1]:
+                align = '|' + align
+                nofmatch += 1
+            else:
+                align = ' '+ align
+            x -= 1
+            y -= 1
+        elif dr[x][y] == 't':
+            seq3 = '-' + seq3
+            seq4 = seq2[x-1] + seq4
+            align = ' ' + align
+            x -= 1
+            nofgap += 1
+        elif dr[x][y] == 'l':
+            seq3 = seq1[y-1] + seq3
+            seq4 = '-'+ seq4
+            align = ' ' + align
+            y -= 1
+            nofgap += 1
+    print("number of gaps: ", nofgap, "number of matches: ", nofmatch)
+    print(seq3)
+    print(align)
+    print(seq4)
+
+def main():
+    seq1 = 'GCCTGGACTCCACATCCGTCCTGGACTGTTGAGCGCGCAGACCAGAGGCGGTTGAGGACCAGTGGTGAGGAACGGCCGAGGCGGCGTCTGAGCGGGTCTCCGGAGTTCAGCATGCGTGAGTGTATCTCTATCCACGTGGGGCAGGCAGGTGTCCAGATCGGCAATGCCTGCTGGGAACTGTACTGCCTTGAACATGGCATTCAGCCTGACGGTCGATGCCAAGCGACAAAACCATTGGCGGCGGGGACGACTCATTCAACACATTCTTCAGTGAGACTGGAGCCGGCAAGCACGTGCCCAGGGCAGTGTTTGTGGACCTGGAGCCCACTGTGGTGGATGAGGTGCGCACGGGAACCTACCGGCAGCTTTTTCACCCAGAGCAGCTGATCACTGGAAAGGAAGATGCAGCCAATAATTATGCCAGAGGCCACTACACCATCGGCAAAGAGATTGTCGACCTGGTCCTGGATCGAATCCGAAAGCTGGCCGATCTGTGCACGGGACTGCAGGGCTTCCTCATCTTCCACAGCTTTGGAGGAGGCACAGGGTCTGGGTTTGCATCGCTGCTGATGGAGCGGCTTTCAGTGGACTATGGCAAGAAGTCCAAGCTGGAGTTTGCCATCTACCCAGCCCCCCAGGTTTCTACAGCGGTCGTGGAGCCTTACAACTCCATCCTGACCACGCACACCACCCTAGAGCATTCCGACTGTGCTTTCATGGTGGATAACGAAGCCATCTACGACATCTGCCGGCGCAACCTGGATATTGAACGTCCCACATACACCAACCTCAATCGTCTGATTGGGCAGATTGTGTCGTCCATTACAGCCTCCCTGAGGTTTGATGGCGCCCTGAATGTGGACTTAACAGAATTCCAGACCAACCTGGTGCCATACCCTCGCATCCACTTCCCACTGGCAACCTACGCCCCGGTCATCTCAGCTGAGAAGGCATACCATGAGCAGCTGTCAGTGGCAGAGATCACCAATGCTTGCTTCGAGCCAGCCAATCAGATGGTCAAGTGTGACCCTCGCCACGGCAAATACATGGCCTGCTGCATGTTGTACCGGGGGGATGTGGTTCCCAAAGATGTCAACGCGGCTATTGCAACCATCAAGACAAAGCGCACCATCCAGTTTGTAGATTGGTGTCCG ACTGGATTTAAGGTGGGTATTAACTACCAGCCTCCCACTGTGGTCCCTGGGGGAGACCTGGCCAAAGTGCAGCGGGCCGTGTGCATGCTGAGCAATACCACGGCCATCGCAGAGGCCTGGGCCCGCCTGGACCACAAATTTGACCTCATGTACGCCAAGCGAGCCTTTGTGCATTGGTACGTGGGAGAAGGCATGGAGGAAGGGGAGTTCTCCGAGGCCCGGGAGGACCTGGCAGCGCTGGAGAAGGACTATGAAGAGGTGGGCGTGGATTCCGTGGAAGCAGAGGCAGAAGAAGGGGAGGAGTACTGAGCGCATGGGTCTGGCTGGCGGCCGTCCATTTATGTCTTCCCCACCATTGGAAATAAAGGATATATTATTAAAATTTCTAGACTGAGGC'
+    seq2 = 'CTAATGAGCATCCAGGGAGAAAGCGTTAAGTACCCGGAGCATCCAGCCTGGACCGTTGGGCGCACGAGCGGCGGTTGAGGAGCAGCTCTGAGGATCGGCTGAGGTGCTCTGCTAGGAGTTCAGCATGCGTGAGTGTATCTCTATCCACGTGGGGCAGGCAGGTGTCCAGATTGGCAATGCCTGCTGGGAGCTGTACTGCCTTGAACATGGTATTCAGCCTGACGGTCAGATGCCAAGCGACAAAACCATTGGCGGCGGGGACGACTCATTCAACACATTCTTCAGTGAGACTGGAGCCGGCAAGCACGTGCCCAGGGCAGTGTTTGTGGACCTGGAGCCCACTGTGGTCGATGAAGTACGCACCGGAACCTACCGGCAGCTTTTCCACCCAGAGCAGCTCATCACTGGGAAGGAAGATGCAGCCAACAATTATGCCAGAGGTCATTATACCATTGGCAAGGAGATTGTTGACCTGGTCCTGGACCGGATCCGAAAACTGGCCGATCTGTGCACGGGACTGCAGGGCTTCCTCATCTTCCACAGCTTTGGAGGTGGCACAGGGTCTGGGTTTGCATCGCTGCTGATGGAGCGGCTTTCAGTGGACTATGGCAAGAAGTCCAAGCTGGAGTTTGCCATCTACCCAGCCCCCCAGGTTTCTACAGCGGTCGTGGAGCCTTACAACTCCATCCTGACCACGCACACCACCCTGGAGCATTCCGACTGTGCTTTCATGGTGGATAACGAAGCCATCTACGACATCTGCCGGCGCAACCTGGATATTGAACGTCCCACATACACCAACCTCAACCGTCTGATTGGGCAGATTGTGTCATCCATCACAGCCTCCCTAAGGTTCGATGGCGCCCTGAATGTGGACTTAACAGAATTCCAGACCAACCTGGTGCCATACCCTCGCATCCACTTCCCACTGGCGACCTATGCCCCAGTCATCTCTGCTGAGAAGGCATACCATGAGCAGCTGTCAGTAGCAGAGATCACCAATGCTTGCTTCGAGCCAGCCAATCAGATGGTCAAGTGTGACCCTCGCCATGGCAAATACATGGCCTGCTGCATGTTGTACCGGGGGGATGTGGTTCCCAAAGATGTCAATGCGGCTATTGCCACCATCAAGACCAAGCGCACCATCCAGTTTGTAGATTGGTGCCCGACTGGATTTAAGGTGGGTATTAACTACCAGCCTCCTACTGTGGTCCCTGGGGGAGACCTGGCCAAGGTGCAGCGGGCTGTGTGCATGCTGAGCAATACCACGGCCATCGCAGAGGCCTGGGCCCGCCTGGACCACAAATTTGACCTCATGTACGCCAAGCGGGCCTTTGTGCATTGGTACGTGGGAGAAGGCATGGAGGAAGGGGAGTTCTCCGAGGCCCGGGAGGACCTGGCAGCGCTGGAGAAGGACTATGAAGAGGTGGGCGTGGATTCCGTGGAAGCAGAGGCAGAAGAAGGGGAGGAGTACTGAGCGCATGGGTCTGGCTGGCGGCCGTCCATTTACACCTTCCCCACCATTGGAAATAAAGGATAT GTTTACTTATTAAAGTTTCTAAATGGAAAAAAA'
+    print("Length of sequence 1: ", len(seq1))
+    print("Length of sequence 2: ", len(seq2))
+    global_align(seq1,seq2)
+    local_align(seq1, seq2)
+
+main ()
